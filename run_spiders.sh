@@ -15,7 +15,7 @@ for ((i=0; i<${#countries[@]}; i++)); do
 done
 
 # Define twelve new variables
-start_url_1=("${start_urls[@]:0:2338}")
+start_url_1=("${start_urls[@]:0:10}")
 start_url_2=("${start_urls[@]:2338:2338}")
 start_url_3=("${start_urls[@]:4676:2338}")
 start_url_4=("${start_urls[@]:7014:2338}")
@@ -49,7 +49,7 @@ run_scraper() {
     echo "Error: Empty start URL provided."
     return 1
   fi
-  python3 test.py "$start_url" || echo "Error: Scraper failed for $start_url."
+  python3 test.py "$start_url" || echo "Error: Scraper failed."
   sleep 5  # Wait for 5 seconds before next run
 }
 

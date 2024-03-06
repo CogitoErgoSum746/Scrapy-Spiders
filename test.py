@@ -13,6 +13,7 @@ class TemplateSpider(scrapy.Spider):
         self.start_urls = start_urls
 
     exchange_rates = []  # List to store exchange rates
+    formatted_exchange_rates = []
 
     custom_settings = {
         'DOWNLOAD_DELAY': 0.25,
@@ -62,17 +63,26 @@ class TemplateSpider(scrapy.Spider):
             
     def parse_xe_link(self, response):
         if response.status == 200:
-            exchange_rate = response.css('main.tab-box__ContentContainer-sc-28io75-3.joNDZm p.result__BigRate-sc-1bsijpp-1.dPdXSB::text').get()
-            base_currency, foreign_currency = self.extract_currencies(response.url)
-            self.exchange_rates.append((base_currency, foreign_currency, exchange_rate))
+            mangea_rate = response.css('main.tab-box__ContentContainer-sc-28io75-3.joNDZm p.result__BigRate-sc-1bsijpp-1.dPdXSB::text').get()
+            faded_digits = response.css('main.tab-box__ContentContainer-sc-28io75-3.joNDZm p.result__BigRate-sc-1bsijpp-1.dPdXSB span.faded-digits::text').get()
+            
+            if mangea_rate and faded_digits:
+                exchange_rate = mangea_rate + faded_digits
+                base_currency, foreign_currency = self.extract_currencies(response.url)
+                self.exchange_rates.append((base_currency, foreign_currency, exchange_rate))
 
 
     def close(self, reason):
         if self.exchange_rates:
             max_retries = 3
+            
+            for base_currency, foreign_currency, exchange_rate in self.exchange_rates:
+                    exchange_rate1 = float(exchange_rate)
+                    exchange_rate2 = "{:.2f}".format(exchange_rate1)
+                    self.formatted_exchange_rates.append((base_currency, foreign_currency, exchange_rate2))
             for attempt in range(max_retries):
                 try:
-                    insert_tuples(self.exchange_rates)
+                    insert_tuples(self.formatted_exchange_rates)
                     return True  # Exit if successful
                 except Exception as e:
                     self.logger.error(f"Database operation failed (attempt {attempt+1}): {e}")
