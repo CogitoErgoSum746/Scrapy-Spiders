@@ -1,5 +1,6 @@
 import scrapy
 from scrapy.crawler import CrawlerProcess
+from scrapy_proxy_pool.middlewares import ProxyPoolMiddleware
 from db import insert_tuples
 import sys
 import time
@@ -20,6 +21,10 @@ class TemplateSpider(scrapy.Spider):
         'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
         'HTTP_PROXY': 'http://localhost:55555',
         'PROXY_POOL_ENABLED': True,
+        'DOWNLOADER_MIDDLEWARES': {
+            'scrapy_proxy_pool.middlewares.ProxyPoolMiddleware': 610,
+            # Other middlewares...
+        },
         'PROXY_POOL_COUNT': 20,
         'PROXY_POOL_REFRESH_INTERVAL': 300,
         'PROXY_POOL_RETRY_TIMES': 5,
@@ -94,8 +99,17 @@ class TemplateSpider(scrapy.Spider):
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
+        # https://www.proxynova.com/proxy-server-list/
+        proxy_list = [
+            'http://proxy1:port',
+            'http://proxy2:port',
+            # ... more proxies ...
+        ]
+
         process = CrawlerProcess({
-            'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36'
+            'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36',
+            # 'PROXY_POOL_FILTER_ANONYMOUS': True,
+            'ROTATING_PROXY_LIST': proxy_list,
         })
         start_urls = sys.argv[1].split(',')
         process.crawl(TemplateSpider, start_urls=start_urls)
